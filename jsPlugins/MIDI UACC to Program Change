@@ -1,0 +1,62 @@
+/*
+MIDI UACC to Program Change v.1.0.0
+
+JS plugin by David Healey
+
+v1.0.0: - 29/06/17 - Initial release
+
+*/
+
+desc:MIDI UACC To Program Change
+
+in_pin:none
+out_pin:none
+
+slider1:0<0,15,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Output Channel
+
+//********************************************************
+
+@init
+
+@slider
+     ccNum = 32;
+     outChan = slider1-1;
+@block
+
+  while (midirecv(offset, msg1, msg2, msg3))
+  (  
+    progNum = 1;
+
+    // Extract message type
+    status = msg1 & $xF0;  
+
+    // Is it a controller event?
+    status == $xB0 ?
+    (     
+      // Is it the right CC?
+      msg2 == ccNum ?
+      (
+        progNum = msg3; //The CC value will be used as the program number
+      );
+    );
+
+    // Pass thru
+    midisend(offset, msg1, msg2, msg3); 
+  );
+
+    //If the progNum variable was populated then output the PC.
+    progNum != -1 ?
+    (
+      //If outChan is -1 then output PC to all channels, otherwise just to selected channel
+      outChan == -1 ?
+      (
+          i = 0;
+          loop(16,
+            midisend(offset, 192+i, progNum, 127); //Note on
+             i += 1;
+          )
+      ) : (
+        midisend(offset, 192+outChan, progNum, 127);
+      );
+      progNum = -1; //Reset output PC
+    );
