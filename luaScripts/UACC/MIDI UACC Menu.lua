@@ -9,6 +9,7 @@ package.path = debug.getinfo(1,"S").source:match[[^@?(.*[\/])[^\/]-$]] .."../?.l
 require('daves reaper midi package v1-0')
 
 local ccNum = 32
+local INSERT_BEFORE = 0; --Set to 1 if you want the CC data inserted before each selected note
 
 gfx.init("UACC", 1, 1)
 
@@ -22,7 +23,11 @@ if input ~= 0 then
 
 	if input < 127 then 
 		drmp.deleteCCUnderSelectedNotes(ccNum) --Remove existing UACC data
-		drmp.insertCCAtSelectedNotes(ccNum, input) --Insert selected UACC data
+		if INSERT_BEFORE == 1 then
+			drmp.insertCCBeforeSelectedNotes(ccNum, input) --Insert selected UACC data
+		else
+			drmp.insertCCAtSelectedNotes(ccNum, input) --Insert selected UACC data
+		end
 		reaper.Undo_EndBlock("MIDI Insert UACC From Menu",-1)
 	else
 		if input == 127 then 
