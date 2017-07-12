@@ -53,7 +53,30 @@ function P.insertCCAtSelectedNotes(ccNum, ccValue)
 			end
 			reaper.MIDI_Sort(t)
 		end
+		reaper.UpdateArrange();
+	end
+end
 
+function P.insertCCBeforeSelectedNotes(ccNum, ccValue)
+
+	takes = P.getActiveMIDITakes() --Get all active MIDI takes
+
+	if takes ~= false then
+		for i, t in pairs(takes) do
+
+			retval, notes, ccs, sysex = reaper.MIDI_CountEvts(t) --Count events
+
+			for n = 0, notes, 1 do --Each note event
+
+				retval, n_selected, n_muted, n_ppq, n_endppq, n_chan, pitch, vel = reaper.MIDI_GetNote(t, n); --Get note data
+
+				--If the note is selected insert CC data
+				if n_selected == true then
+					reaper.MIDI_InsertCC(t, false, false, n_ppq-15, 176, n_chan, ccNum, math.floor(ccValue));
+				end
+			end
+			reaper.MIDI_Sort(t)
+		end
 		reaper.UpdateArrange();
 	end
 end
@@ -175,7 +198,7 @@ function P.addIntervalToSelectedNotes(interval)
 			if noteData ~= nil then
 				for n, d in pairs(noteData) do --Go through selected note data
 					--Add new note
-					reaper.MIDI_InsertNote(t, true, false, d.n_ppq, d.n_endppq, d.n_chan, d.n_pitch+interval, d.n_vel, true)
+					reaper.MIDI_InsertNote(t, false, false, d.n_ppq, d.n_endppq, d.n_chan, d.n_pitch+interval, d.n_vel, true)
 				end
 			end
 
