@@ -481,12 +481,31 @@ function P.getTextIndexForNote(take, notePPQ, noteChannel, notePitch)
     return(-1)
 end
 
-function P.insertCustomTextAtGivenNote(t, nIdx, text)
+function P.insertCustomTextAtSelectedNotes(text)
 
-	retval, n_selected, n_muted, n_ppq, n_end, n_chan, pitch, vel = reaper.MIDI_GetNote(t, nIdx); --Get note data
+	takes = P.getActiveMIDITakes() --Get all active MIDI takes
 
-	textToInsert = "NOTE 0 " .. pitch .. " custom " .. text
-	reaper.MIDI_InsertTextSysexEvt(t, n_selected, n_muted, n_ppq, 0x0F, textToInsert)
+	if takes ~= false then
+
+		for i, t in pairs(takes) do
+			
+			retval, notes, ccs, sysex = reaper.MIDI_CountEvts(t) --Count events
+			
+			for n = 0, notes, 1 do --Each note event
+
+				retval, n_selected, n_muted, n_ppq, n_endppq, n_chan, pitch, vel = reaper.MIDI_GetNote(t, n); --Get note data
+				
+				if n_selected == true then --If this note is selected
+					textToInsert = "NOTE 0 " .. pitch .. " custom " .. text
+					reaper.MIDI_InsertTextSysexEvt(t, n_selected, n_muted, n_ppq, 0x0F, textToInsert)
+				end
+			end
+
+			reaper.MIDI_Sort(t)
+		end 
+		reaper.UpdateArrange();
+	end
+
 end
 
 return P --Not neccessary but considered good practice apparently
